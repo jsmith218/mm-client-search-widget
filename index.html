@@ -108,21 +108,16 @@ function select(r) {
 
   const FORM_URL = "https://form.jotform.com/260394523652054";
 
-  // These are the exact parameter names Jotform expects
-  const params = new URLSearchParams();
+const qs = new URLSearchParams();
+qs.set("client_id", r.id || "");
+qs.set("family_size", r["# in family"] || "");
+qs.set("first_name", r.first || "");
+qs.set("last_name", r.last || "");
+qs.set("address", r.address || "");
+qs.set("start_date", r.start || "");
+qs.set("end_date", r.end || "");
 
-  params.set("clientID", r.id || "");
-  params.set("inFamily", r["# in family"] || "");
-  params.set("firstName", r.first || "");
-  params.set("lastName", r.last || "");
-  params.set("address", r.address || "");
-  params.set("startDate", r.start || "");
-  params.set("endDate", r.end || "");
-
-  // Redirect entire app to prefilled form
-  window.top.location.href = FORM_URL + "?" + params.toString();
-}
-
+window.top.location.href = `${FORM_URL}?${qs.toString()}`;
 
 
 
