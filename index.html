@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://js.jotform.com/JotFormCustomWidget.min.js"></script>
+
+<style>
+body { font-family: Arial; padding: 10px; }
+input { width: 100%; padding: 8px; margin-bottom: 8px; }
+.result {
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin: 6px 0;
+  cursor: pointer;
+}
+.result:hover {
+  background: #f0f0f0;
+}
+</style>
+
+</head>
+
+<body>
+
+<input id="last" placeholder="Last Name">
+<input id="first" placeholder="First Name (optional)">
+
+<div id="results"></div>
+
+<script>
+
+const ENDPOINT = "https://script.google.com/macros/s/AKfycby_YNguxb686hnZa_XxcovVpvvrUUXn8bSSRPjm9XpSYhyV-Xjc-8o6r_t6BS_iscQA/exec";
+
+let timeout;
+
+document.getElementById("last").addEventListener("input", search);
+document.getElementById("first").addEventListener("input", search);
+
+function search() {
+
+clearTimeout(timeout);
+
+timeout = setTimeout(async () => {
+
+const last = document.getElementById("last").value;
+const first = document.getElementById("first").value;
+
+if (!last) return;
+
+const url = `${ENDPOINT}?last=${last}&first=${first}`;
+
+const response = await fetch(url);
+const data = await response.json();
+
+render(data.results);
+
+}, 300);
+
+}
+
+function render(results) {
+
+const container = document.getElementById("results");
+
+container.innerHTML = "";
+
+results.forEach(r => {
+
+const div = document.createElement("div");
+
+div.className = "result";
+
+div.innerHTML =
+`<b>${r.last}, ${r.first}</b><br>
+ID: ${r.id}<br>
+Family: ${r.family}<br>
+${r.address}<br>
+Ends: ${r.end}`;
+
+div.onclick = () => select(r);
+
+container.appendChild(div);
+
+});
+
+}
+
+function select(r) {
+
+navigator.clipboard.writeText(r.id);
+
+JFCustomWidget.sendData({
+value: r.id
+});
+
+alert("ID copied: " + r.id);
+
+}
+
+</script>
+
+</body>
+</html>
