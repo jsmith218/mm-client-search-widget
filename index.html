@@ -105,33 +105,24 @@ container.appendChild(div);
 }
 
 function select(r) {
-  // optional: still copy ID
-  navigator.clipboard.writeText(r.id).catch(() => {});
 
-  // ✅ CHANGE THESE to match your prefill URL parameter names
-  const FORM_URL = "https://form.jotform.com/260394523652054/prefill/698e01fa353239cb09b03cb286cb"; // your form URL
-  const P = {
-    uniqueId: "uniqueID",          // <-- replace with real param key
-    first: "firstName",            // <-- replace with real param key
-    last: "lastName",              // <-- replace with real param key
-    family: "family",              // <-- replace with real param key
-    address: "address",            // <-- replace with real param key
-    start: "startDate",            // <-- replace with real param key
-    end: "endDate"                 // <-- replace with real param key
-  };
+  const FORM_URL = "https://form.jotform.com/260394523652054";
 
-  const qs = new URLSearchParams();
-  qs.set(P.uniqueId, r.id || "");
-  qs.set(P.first, r.first || "");
-  qs.set(P.last, r.last || "");
-  qs.set(P.family, r["# in family"] || "");
-  qs.set(P.address, r.address || "");
-  qs.set(P.start, r.start || "");
-  qs.set(P.end, r.end || "");
+  // These are the exact parameter names Jotform expects
+  const params = new URLSearchParams();
 
-  // ✅ In the Jotform app / iframe context, top-level redirect is usually needed
-  window.top.location.href = `${FORM_URL}?${qs.toString()}`;
+  params.set("clientID", r.id || "");
+  params.set("inFamily", r["# in family"] || "");
+  params.set("firstName", r.first || "");
+  params.set("lastName", r.last || "");
+  params.set("address", r.address || "");
+  params.set("startDate", r.start || "");
+  params.set("endDate", r.end || "");
+
+  // Redirect entire app to prefilled form
+  window.top.location.href = FORM_URL + "?" + params.toString();
 }
+
 
 
 
