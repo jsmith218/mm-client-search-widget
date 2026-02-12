@@ -105,16 +105,17 @@ container.appendChild(div);
 }
 
 function select(r) {
+  // 1) Save widget value
+  JFCustomWidget.sendData({ value: r.id });
 
-navigator.clipboard.writeText(r.id);
+  // 2) Force Jotform to treat it like a real field update (triggers conditions)
+  JFCustomWidget.sendSubmit({ valid: true, value: r.id });
 
-JFCustomWidget.sendData({
-value: r.id
-});
-
-alert("ID copied: " + r.id);
-
+  // optional UX
+  navigator.clipboard.writeText(r.id);
+  alert("Selected ID: " + r.id);
 }
+
 
 </script>
 
