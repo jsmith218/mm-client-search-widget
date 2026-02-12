@@ -5,14 +5,26 @@
 <script src="https://js.jotform.com/JotFormCustomWidget.min.js"></script>
 
 <style>
-body { font-family: Arial; padding: 10px; }
-input { width: 100%; padding: 8px; margin-bottom: 8px; }
+body {
+  font-family: Arial;
+  padding: 10px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
 .result {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 10px;
   margin: 6px 0;
   cursor: pointer;
+  border-radius: 6px;
 }
+
 .result:hover {
   background: #f0f0f0;
 }
@@ -22,6 +34,7 @@ input { width: 100%; padding: 8px; margin-bottom: 8px; }
 
 <body>
 
+<input id="id" placeholder="Member ID (optional)">
 <input id="last" placeholder="Last Name">
 <input id="first" placeholder="First Name (optional)">
 
@@ -33,6 +46,7 @@ const ENDPOINT = "https://script.google.com/macros/s/AKfycbxdv7NaVeYIjbkq8NSFE5h
 
 let timeout;
 
+document.getElementById("id").addEventListener("input", search);
 document.getElementById("last").addEventListener("input", search);
 document.getElementById("first").addEventListener("input", search);
 
@@ -42,19 +56,24 @@ clearTimeout(timeout);
 
 timeout = setTimeout(async () => {
 
-const last = document.getElementById("last").value;
-const first = document.getElementById("first").value;
+const id = document.getElementById("id").value.trim();
+const last = document.getElementById("last").value.trim();
+const first = document.getElementById("first").value.trim();
 
-if (!last) return;
+if (!id && !last) {
+  document.getElementById("results").innerHTML = "";
+  return;
+}
 
-const url = `${ENDPOINT}?last=${last}&first=${first}`;
+const url =
+  `${ENDPOINT}?id=${encodeURIComponent(id)}&last=${encodeURIComponent(last)}&first=${encodeURIComponent(first)}&limit=25`;
 
 const response = await fetch(url);
 const data = await response.json();
 
 render(data.results);
 
-}, 300);
+}, 250);
 
 }
 
