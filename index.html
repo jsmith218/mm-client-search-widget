@@ -104,8 +104,15 @@ const url =
 
 const data = await jsonp(url);
 
+// ADD THIS BLOCK
+if (!data.ok) {
+  document.getElementById("results").innerHTML =
+    `<div class="result"><b>Error:</b> ${data.error}</div>`;
+  return;
+}
 
-render(data.results);
+render(data.results || []);
+
 
 }, 400);
 
