@@ -131,6 +131,7 @@ function render(results) {
   params.set("address", r.address || "");
   params.set("start_date", r.start || "");
   params.set("end_date", r.end || "");
+document.getElementById("status").textContent = "Loading client...";
 
   // Redirect entire Jotform app
   window.top.location.href = FORM_URL + "?" + params.toString();
