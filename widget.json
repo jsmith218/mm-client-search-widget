@@ -1,0 +1,14 @@
+{
+  "name": "MM Client Search",
+  "description": "Search clients from Google Sheet and return selected Unique ID",
+  "version": "1.0.0",
+  "icon": "https://www.jotform.com/favicon.ico",
+  "setup": "index.html",
+  "options": {
+    "endpoint": {
+      "type": "text",
+      "label": "Apps Script Endpoint URL",
+      "default": ""
+    }
+  }
+}
