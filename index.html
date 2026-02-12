@@ -29,7 +29,7 @@ input { width: 100%; padding: 8px; margin-bottom: 8px; }
 
 <script>
 
-const ENDPOINT = "https://script.google.com/macros/s/AKfycby_YNguxb686hnZa_XxcovVpvvrUUXn8bSSRPjm9XpSYhyV-Xjc-8o6r_t6BS_iscQA/exec";
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbxdv7NaVeYIjbkq8NSFE5hOEqZoM5nxf1amMXeBBwBOGZ1CajEHRrmujZKOuupCApJz/exec";
 
 let timeout;
 
@@ -73,7 +73,7 @@ div.className = "result";
 div.innerHTML =
 `<b>${r.last}, ${r.first}</b><br>
 ID: ${r.id}<br>
-Family: ${r.family}<br>
+# in family: ${r["# in family"]}<br>
 ${r.address}<br>
 Ends: ${r.end}`;
 
