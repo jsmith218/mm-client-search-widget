@@ -119,11 +119,23 @@ function render(results) {
     `;
 
     div.onclick = () => {
-      // Copy ID for convenience (still helpful even if you redirect elsewhere)
-      if (navigator.clipboard && r.id) navigator.clipboard.writeText(r.id).catch(()=>{});
-      // You can add redirect/prefill logic here if you want later.
-      alert("Selected: " + (r.id || ""));
-    };
+
+  const FORM_URL = "https://form.jotform.com/260394523652054";
+
+  const params = new URLSearchParams();
+
+  params.set("client_id", r.id || "");
+  params.set("first_name", r.first || "");
+  params.set("last_name", r.last || "");
+  params.set("family_size", r["# in family"] || "");
+  params.set("address", r.address || "");
+  params.set("start_date", r.start || "");
+  params.set("end_date", r.end || "");
+
+  // Redirect entire Jotform app
+  window.top.location.href = FORM_URL + "?" + params.toString();
+};
+
 
     resultsEl.appendChild(div);
   });
