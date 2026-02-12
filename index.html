@@ -2,50 +2,30 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://js.jotform.com/JotFormCustomWidget.min.js"></script>
-
 <style>
-body {
-  font-family: Arial;
-  padding: 10px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 8px;
-  font-size: 16px;
-}
-
-.result {
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin: 6px 0;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.result:hover {
-  background: #f0f0f0;
-}
+  body { font-family: Arial, sans-serif; padding: 10px; }
+  input { width: 100%; padding: 10px; margin: 6px 0; font-size: 16px; }
+  .result { border: 1px solid #ddd; padding: 10px; margin: 6px 0; border-radius: 8px; }
+  .result:hover { background: #f2f2f2; }
+  .hint { font-size: 12px; opacity: .7; margin: 6px 0 10px; }
+  .error { border: 1px solid #f3b; background: #fff5f8; }
 </style>
-
 </head>
-
 <body>
 
-<input id="id" placeholder="Client ID (recommended)">
-<input id="last" placeholder="Last Name">
-<input id="first" placeholder="First Name">
+<input id="id" placeholder="Client ID (optional)">
+<input id="last" placeholder="Last name">
+<input id="first" placeholder="First name (optional)">
+<div class="hint" id="status">Type at least 2 letters of last name (or an ID).</div>
 
 <div id="results"></div>
 
 <script>
-
-// PASTE IT HERE
+// ===== JSONP helper (works inside Jotform iframe; avoids CORS) =====
 function jsonp(url) {
   return new Promise((resolve, reject) => {
     const cbName = "cb_" + Math.random().toString(36).slice(2);
+
     window[cbName] = (data) => {
       try { delete window[cbName]; } catch(e) {}
       script.remove();
@@ -59,109 +39,104 @@ function jsonp(url) {
       script.remove();
       reject(new Error("JSONP request failed"));
     };
+
     document.body.appendChild(script);
   });
 }
 
+// ===== Set your Apps Script endpoint here =====
+const ENDPOINT = "YOUR_APPS_SCRIPT_EXEC_URL_HERE";
 
-const ENDPOINT = "https://script.google.com/macros/s/AKfycbyHOJj1wvNzz4z4OhjxpUBIQDhr3KDKE4tug6jUemZSNIlkYximRfcP2sg5GxCF5J5a/exec";
-function jsonp(url) { /* your jsonp function */ }
+let t = null;
 
-const ENDPOINT = "https://script.google.com/macros/s/.../exec";
-
-// ✅ Add this right here:
+// Warm-up ping to reduce Apps Script cold-start pain
 jsonp(`${ENDPOINT}?id=zzzzzzzz&limit=1`).catch(()=>{});
 
-// your existing listeners + search() below...
+document.getElementById("id").addEventListener("input", scheduleSearch);
+document.getElementById("last").addEventListener("input", scheduleSearch);
+document.getElementById("first").addEventListener("input", scheduleSearch);
 
-let timeout;
-
-document.getElementById("id").addEventListener("input", search);
-document.getElementById("last").addEventListener("input", search);
-document.getElementById("first").addEventListener("input", search);
-
-function search() {
-if (!id && last.length < 2) {
-  document.getElementById("results").innerHTML = "";
-  return;
+function scheduleSearch() {
+  clearTimeout(t);
+  t = setTimeout(runSearch, 450); // debounce
 }
 
-clearTimeout(timeout);
+async function runSearch() {
+  const id = document.getElementById("id").value.trim();
+  const last = document.getElementById("last").value.trim();
+  const first = document.getElementById("first").value.trim();
 
-timeout = setTimeout(async () => {
+  const resultsEl = document.getElementById("results");
+  const statusEl = document.getElementById("status");
 
-const id = document.getElementById("id").value.trim();
-const last = document.getElementById("last").value.trim();
-const first = document.getElementById("first").value.trim();
+  // require at least 2 chars of last name unless ID is present
+  if (!id && last.length < 2) {
+    resultsEl.innerHTML = "";
+    statusEl.textContent = "Type at least 2 letters of last name (or an ID).";
+    return;
+  }
 
-if (!id && !last) {
-  document.getElementById("results").innerHTML = "";
-  return;
-}
+  statusEl.textContent = "Searching…";
 
-const url =
-  `${ENDPOINT}?id=${encodeURIComponent(id)}&last=${encodeURIComponent(last)}&first=${encodeURIComponent(first)}&limit=25`;
+  const url =
+    `${ENDPOINT}?id=${encodeURIComponent(id)}&last=${encodeURIComponent(last)}&first=${encodeURIComponent(first)}&limit=25`;
 
-const data = await jsonp(url);
+  try {
+    const data = await jsonp(url);
 
-// ADD THIS BLOCK
-if (!data.ok) {
-  document.getElementById("results").innerHTML =
-    `<div class="result"><b>Error:</b> ${data.error}</div>`;
-  return;
-}
+    if (!data.ok) {
+      resultsEl.innerHTML = `<div class="result error"><b>Error:</b> ${escapeHtml(data.error || "Unknown error")}</div>`;
+      statusEl.textContent = "Search error";
+      return;
+    }
 
-render(data.results || []);
+    const results = data.results || [];
+    statusEl.textContent = results.length ? `${results.length} match(es)` : "No matches";
 
+    render(results);
 
-}, 400);
-
+  } catch (err) {
+    resultsEl.innerHTML = `<div class="result error"><b>Error:</b> ${escapeHtml(String(err.message || err))}</div>`;
+    statusEl.textContent = "Search failed";
+  }
 }
 
 function render(results) {
+  const resultsEl = document.getElementById("results");
+  resultsEl.innerHTML = "";
 
-const container = document.getElementById("results");
+  results.forEach(r => {
+    const div = document.createElement("div");
+    div.className = "result";
+    div.style.cursor = "pointer";
 
-container.innerHTML = "";
+    div.innerHTML = `
+      <b>${escapeHtml(r.last || "")}, ${escapeHtml(r.first || "")}</b><br>
+      <b>ID:</b> ${escapeHtml(r.id || "")}<br>
+      <b># in family:</b> ${escapeHtml(r["# in family"] || "")}<br>
+      <b>Address:</b> ${escapeHtml(r.address || "")}<br>
+      <b>End:</b> ${escapeHtml(r.end || "")}
+    `;
 
-results.forEach(r => {
+    div.onclick = () => {
+      // Copy ID for convenience (still helpful even if you redirect elsewhere)
+      if (navigator.clipboard && r.id) navigator.clipboard.writeText(r.id).catch(()=>{});
+      // You can add redirect/prefill logic here if you want later.
+      alert("Selected: " + (r.id || ""));
+    };
 
-const div = document.createElement("div");
-
-div.className = "result";
-
-div.innerHTML =
-`<b>${r.last}, ${r.first}</b><br>
-ID: ${r.id}<br>
-# in family: ${r["# in family"]}<br>
-${r.address}<br>
-Ends: ${r.end}`;
-
-div.onclick = () => select(r);
-
-container.appendChild(div);
-
-});
-
+    resultsEl.appendChild(div);
+  });
 }
 
-function select(r) {
-
-  const FORM_URL = "https://form.jotform.com/260394523652054";
-
-const qs = new URLSearchParams();
-qs.set("client_id", r.id || "");
-qs.set("family_size", r["# in family"] || "");
-qs.set("first_name", r.first || "");
-qs.set("last_name", r.last || "");
-qs.set("address", r.address || "");
-qs.set("start_date", r.start || "");
-qs.set("end_date", r.end || "");
-
-window.top.location.href = `${FORM_URL}?${qs.toString()}`;
-
+function escapeHtml(s) {
+  return String(s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
-
 </script>
 
 </body>
